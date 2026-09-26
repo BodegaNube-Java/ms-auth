@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: ms-auth
+  description: Microservicio de autenticación y usuarios de BodegaNube.
+  version: 0.0.1
+servers:
+  - url: /auth
+paths:
+  /login:
+    post:
+      summary: Autentica un usuario y retorna un token JWT.
+      responses:
+        "200":
+          description: Login exitoso.
+        "401":
+          description: Credenciales inválidas.
+  /usuarios/me:
+    get:
+      summary: Retorna el usuario autenticado y su rol.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Usuario autenticado.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
