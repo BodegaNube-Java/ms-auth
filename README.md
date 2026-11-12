@@ -51,14 +51,19 @@ cd ms-auth
 Copy-Item .env.example .env
 ```
 
-Contenido para desarrollo local:
+Completa los valores:
 
 ```
 DB_USER=postgres
-DB_PASSWORD=postgres
+DB_PASSWORD=tu-clave
+JWT_SECRET=un-secreto-largo-de-al-menos-32-caracteres
 ```
 
+El mismo `.env` lo usan Docker Compose (para crear la BD) y Spring Boot (lo lee con
+`spring.config.import`), así que no hace falta definir variables en la terminal.
+
 > El `.env` **no se sube a Git** (está en `.gitignore`). Solo se versiona `.env.example`.
+> Si falta `DB_PASSWORD` o `JWT_SECRET`, la app no arranca (`Could not resolve placeholder`).
 
 ### 3. Levantar la base de datos (Docker)
 
@@ -129,28 +134,28 @@ Archivo `src/main/resources/application.properties`:
 | Propiedad | Valor | Descripción |
 |---|---|---|
 | `server.port` | `8081` | Puerto del servicio |
-| `spring.datasource.url` | `jdbc:postgresql://127.0.0.1:5434/auth_db` | Conexión a la BD |
+| `spring.config.import` | `optional:file:.env[.properties]` | Lee el `.env` de la raíz |
+| `spring.datasource.url` | `${DB_URL:jdbc:postgresql://127.0.0.1:5434/auth_db}` | Conexión a la BD (variable opcional) |
 | `spring.datasource.username` | `${DB_USER:postgres}` | Usuario (variable de entorno) |
-| `spring.datasource.password` | `${DB_PASSWORD:postgres}` | Clave (variable de entorno) |
+| `spring.datasource.password` | `${DB_PASSWORD}` | Clave (obligatoria, sin valor por defecto) |
 | `spring.jpa.hibernate.ddl-auto` | `update` | Crea/actualiza tablas |
-| `app.jwt.secret` | `${JWT_SECRET:...}` | Secreto para firmar el JWT (mínimo 32 caracteres) |
+| `app.jwt.secret` | `${JWT_SECRET}` | Secreto para firmar el JWT (obligatorio, mínimo 32 caracteres) |
 | `app.jwt.expiracion-ms` | `28800000` | Duración del token: 8 horas |
 
-La URL usa `127.0.0.1` y no `localhost` a propósito: en Windows, `localhost` puede
-resolverse a IPv6 (`::1`) y llegar a otro proceso (por ejemplo el relay de WSL).
+La URL por defecto usa `127.0.0.1` y no `localhost` a propósito: en Windows, `localhost`
+puede resolverse a IPv6 (`::1`) y llegar a otro proceso (por ejemplo el relay de WSL).
 
-Para usar otras credenciales o un secreto propio, defínelos en la misma terminal donde
-ejecutas la app:
+Las variables del sistema tienen prioridad sobre el `.env`. En un contenedor o en la nube
+no hay `.env`: los valores se entregan como variables de entorno (por ejemplo, con
+`environment:` en Docker Compose). Para probar otros valores en local sin tocar el `.env`:
 
 ```powershell
-$env:DB_USER="postgres"
-$env:DB_PASSWORD="tu-clave"
-$env:JWT_SECRET="un-secreto-largo-de-al-menos-32-caracteres"
+$env:DB_URL="jdbc:postgresql://127.0.0.1:5432/auth_db"
 .\mvnw spring-boot:run
 ```
 
-> El secreto por defecto es solo para desarrollo. En un despliegue real debe venir de una
-> variable de entorno y nunca del repositorio.
+> Ningún secreto vive en el repositorio: solo en el `.env` local o en las variables del
+> entorno de despliegue.
 
 ## Arquitectura (CSR)
 
