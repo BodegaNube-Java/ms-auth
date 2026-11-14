@@ -1,0 +1,33 @@
+name: Pipeline CI/CD Completo - Microservicio Java 21
+
+on:
+  push:
+    branches: [main,develop]
+
+jobs:
+  ci-build-and-test:
+    name: 1. Integracion Continua (Build, Test & Artifact)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar codigo del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 21 (Amazon Corretto)
+        uses: actions/setup-java@v5
+        with:
+          distribution: "corretto"
+          java-version: "21"
+          cache: "maven"
+
+      - name: Ejecutar pruebas unitarias (JUnit)
+        run: mvn test
+
+      - name: Empaquetar aplicacion (.jar)
+        run: mvn package -DskipTests
+
+      - name: Guardar artefacto compilado en GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: microservicio-jar
+          path: target/*.jar
